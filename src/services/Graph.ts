@@ -144,23 +144,23 @@ export class MetroGraph {
         // 生成 Nodes
         this.stations.forEach(station => {
             const isTransfer = station.isTransfer;
-            const mainLine = station.lines[0];
-            const lineColor = this.getLineColor(mainLine);
+            const mainLineId = station.lines[0];
+            const lineColor = this.getLineColor(mainLineId);
+
+            // 新增：获取该站点在主线路中的索引，用于计算文字交错位置
+            const mainLine = this.lines.get(mainLineId);
+            const stationIndex = mainLine ? mainLine.stations.indexOf(station.id) : 0;
 
             // 简单的样式逻辑：换乘站大一点
             const size = isTransfer ? 16 : 8;
-            
-            // 颜色逻辑：
-            // 换乘站：白色填充，深色边框 (在 MetroMap 中会进一步处理)
-            // 普通站：白色填充，线路颜色边框
-            
+
             nodes.push({
                 id: station.id,
                 name: station.name,
                 x: station.position.x,
                 y: station.position.y,
                 symbolSize: size,
-                itemStyle: { 
+                itemStyle: {
                     color: '#ffffff', // 统一白色背景
                     borderColor: isTransfer ? '#333333' : lineColor,
                     borderWidth: isTransfer ? 3 : 2
@@ -168,7 +168,10 @@ export class MetroGraph {
                 // 传递额外属性给前端组件使用
                 // @ts-ignore
                 isTransfer: isTransfer,
-                lineColor: lineColor
+                // @ts-ignore
+                lineColor: lineColor,
+                // @ts-ignore
+                stationIndex: stationIndex // 传递索引
             });
         });
 

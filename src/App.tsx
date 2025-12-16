@@ -3,55 +3,161 @@ import { ThemeProvider, useThemeContext } from './contexts/ThemeContext';
 import { MainLayout } from './components/Layout/MainLayout';
 import { SearchPanel } from './components/Sidebar/SearchPanel';
 import { MetroMap } from './components/Map/MetroMap';
+import { RouteResultTimeline } from './components/RouteResult/RouteTimeline'; // 导入结果组件
 import { stationsData } from './data/stations';
 import { linesData } from './data/lines';
 import { connectionsData } from './data/connections';
 import { graphService } from './services/Graph';
 import { routeFinder } from './services/Algorithms';
 import type { AlgorithmConfig, RouteResult, Station } from './types';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography, Paper } from '@mui/material';
+import { DirectionsSubway, TripOrigin, LocationOn } from '@mui/icons-material'; 
 
-// 内部组件，用于消费 ThemeContext
 const AppContent: React.FC = () => {
   const { isDarkMode, toggleTheme } = useThemeContext();
-  
-  // 1. 状态提升到 App
-  const [startStation, setStartStation] = useState<Station | null>(null);
-  const [endStation, setEndStation] = useState<Station | null>(null);
-  const [viaStations, setViaStations] = useState<Station[]>([]);
+
+  const [selectedStations, setSelectedStations] = useState<Station[]>([]);
   const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
-  
-  // 新增：图数据加载状态
   const [isGraphReady, setIsGraphReady] = useState(false);
 
-  // 2. 智能填入逻辑：点击地图时，自动判断填入起点还是终点
-  const handleMapStationClick = (stationId: string) => {
+  // 控制右侧栏状态
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+
+  const startStation = selectedStations.length > 0 ? selectedStations[0] : null;
+  const endStation = selectedStations.length > 1 ? selectedStations[selectedStations.length - 1] : null;
+  const viaStations = selectedStations.length > 2 ? selectedStations.slice(1, -1) : [];
+
+
+  // 为了节省篇幅，这里省略中间未修改的 handler 函数，请保留原有的 handleMapStationClick 等函数
+  const handleMapStationClick = (stationId: string, mode: 'start' | 'end' | 'via' | 'auto') => {
     const station = graphService.getStation(stationId);
     if (!station) return;
 
-    if (!startStation) {
-      setStartStation(station);
-    } else if (!endStation) {
-      setEndStation(station);
-    } else {
-      // 如果都填了，重新开始：设为起点，清空终点
-      setStartStation(station);
-      setEndStation(null);
-      setRouteResult(null);
+    let newStations = [...selectedStations];
+    const existingIndex = newStations.findIndex(s => s.id === station.id);
+
+    switch (mode) {
+      case 'auto':
+        if (existingIndex !== -1) {
+          newStations.splice(existingIndex, 1);
+        } else {
+          newStations.push(station);
+        }
+        break;
+
+      case 'start':
+        if (newStations.length === 0) {
+          newStations = [station];
+        } else {
+          newStations[0] = station;
+        }
+        break;
+
+      case 'end':
+        if (newStations.length === 0) {
+          newStations = [station];
+        } else if (newStations.length === 1) {
+          newStations.push(station);
+        } else {
+          newStations[newStations.length - 1] = station;
+        }
+        break;
+
+      case 'via':
+        if (newStations.length < 2) {
+          newStations.push(station);
+        } else {
+          if (existingIndex === -1) {
+            newStations.splice(newStations.length - 1, 0, station);
+          }
+        }
+        break;
     }
+
+    setSelectedStations(newStations);
+    if (routeResult) setRouteResult(null);
   };
 
-  // 初始化图数据
+  const handleStartChange = (station: Station | null) => {
+    if (!station) {
+      const newStations = [...selectedStations];
+      newStations.shift();
+      setSelectedStations(newStations);
+    } else {
+      const newStations = [...selectedStations];
+      if (newStations.length === 0) newStations.push(station);
+      else newStations[0] = station;
+      setSelectedStations(newStations);
+    }
+    setRouteResult(null);
+  };
+
+  const handleEndChange = (station: Station | null) => {
+    const newStations = [...selectedStations];
+    if (!station) {
+      if (newStations.length > 1) newStations.pop();
+    } else {
+      if (newStations.length <= 1) newStations.push(station);
+      else newStations[newStations.length - 1] = station;
+    }
+    setSelectedStations(newStations);
+    setRouteResult(null);
+  };
+
+  const handleViaChange = (vias: Station[]) => {
+    const start = selectedStations[0];
+    const end = selectedStations.length > 1 ? selectedStations[selectedStations.length - 1] : null;
+
+    const newStations: Station[] = [];
+    if (start) newStations.push(start);
+    newStations.push(...vias);
+    if (end) newStations.push(end);
+
+    setSelectedStations(newStations);
+    setRouteResult(null);
+  };
+
+  // 新增：处理交换逻辑
+  const handleSwapStations = () => {
+    // 只有当至少有两个站点（起点和终点）时才能交换
+    if (selectedStations.length < 2) return;
+
+    const newStations = [...selectedStations];
+    const startIdx = 0;
+    const endIdx = newStations.length - 1;
+
+    // 交换首尾元素
+    const temp = newStations[startIdx];
+    newStations[startIdx] = newStations[endIdx];
+    newStations[endIdx] = temp;
+
+    setSelectedStations(newStations);
+    setRouteResult(null); // 交换后清除旧结果
+  };
+
+  const handleClear = () => {
+    setSelectedStations([]);
+    setRouteResult(null);
+    setIsRightSidebarOpen(false); // 清除时关闭右侧栏
+  };
+
   useEffect(() => {
-    // 这是一个同步操作，但为了确保组件渲染顺序，我们使用状态控制
     graphService.init(stationsData, connectionsData, linesData);
     setIsGraphReady(true);
   }, []);
 
   const handleSearch = (config: AlgorithmConfig) => {
     if (startStation && endStation) {
-      const result = routeFinder.calculate(startStation.id, endStation.id, config);
+      const viaIds = viaStations.map(s => s.id);
+      const result = routeFinder.calculate(startStation.id, endStation.id, {
+        ...config,
+        viaStations: viaIds
+      });
       setRouteResult(result);
+      // 搜索成功后自动打开右侧栏
+      if (result) {
+        setIsRightSidebarOpen(true);
+      }
     }
   };
 
@@ -59,28 +165,96 @@ const AppContent: React.FC = () => {
     <MainLayout
       isDarkMode={isDarkMode}
       toggleTheme={toggleTheme}
-      sidebar={
-        <SearchPanel 
-          stations={stationsData} 
-          
-          // 传递状态
+      isRightSidebarOpen={isRightSidebarOpen}
+      setRightSidebarOpen={setIsRightSidebarOpen}
+      // 左侧栏：只放搜索面板
+      leftSidebar={
+        <SearchPanel
+          stations={stationsData}
           startStation={startStation}
           endStation={endStation}
           viaStations={viaStations}
-          onStartChange={setStartStation}
-          onEndChange={setEndStation}
-          onViaChange={setViaStations}
-          
-          onSearch={handleSearch} 
-          result={routeResult} 
+          onStartChange={handleStartChange}
+          onEndChange={handleEndChange}
+          onViaChange={handleViaChange}
+          onSearch={handleSearch}
+          onClear={handleClear}
+          onSwap={handleSwapStations} // 传递交换函数
+          hasResult={!!routeResult}
         />
       }
+      // 右侧栏：只放结果展示
+      rightSidebar={
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DirectionsSubway color="primary" /> 规划结果
+            </Typography>
+            {/* 如果有结果，显示一个小 Chip */}
+            {routeResult && (
+              <Typography variant="caption" sx={{ bgcolor: 'primary.container', color: 'primary.onContainer', px: 1, py: 0.5, borderRadius: 1 }}>
+                已规划
+              </Typography>
+            )}
+          </Box>
+
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2, position: 'relative' }}>
+            {routeResult ? (
+              <RouteResultTimeline
+                result={routeResult}
+                viaStationIds={viaStations.map(v => v.id)}
+              />
+            ) : (
+              // --- 美化后的空状态 ---
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                opacity: 0.8,
+                textAlign: 'center',
+                gap: 2
+              }}>
+                {/* 装饰性图标组合 */}
+                <Box sx={{ position: 'relative', width: 120, height: 120, mb: 2 }}>
+                  <Box sx={{
+                    position: 'absolute', inset: 0, borderRadius: '50%',
+                    bgcolor: 'primary.container', opacity: 0.3,
+                    animation: 'pulse 3s infinite ease-in-out',
+                    '@keyframes pulse': {
+                      '0%': { transform: 'scale(0.8)', opacity: 0.3 },
+                      '50%': { transform: 'scale(1.1)', opacity: 0.1 },
+                      '100%': { transform: 'scale(0.8)', opacity: 0.3 },
+                    }
+                  }} />
+                  <DirectionsSubway sx={{ fontSize: 64, color: 'primary.main', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+                  <TripOrigin sx={{ fontSize: 24, color: 'success.main', position: 'absolute', top: 20, right: 20 }} />
+                  <LocationOn sx={{ fontSize: 24, color: 'error.main', position: 'absolute', bottom: 20, left: 20 }} />
+                </Box>
+
+                <Box>
+                  <Typography variant="h6" fontWeight="bold" gutterBottom color="text.primary">
+                    准备出发？
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 200, mx: 'auto' }}>
+                    在左侧选择起点和终点，我们将为您规划最佳的地铁路线。
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      }
       map={
-        // 只有当图数据初始化完成后才渲染地图
         isGraphReady ? (
-          <MetroMap 
-            routeResult={routeResult} 
-            onStationClick={handleMapStationClick} 
+          <MetroMap
+            routeResult={routeResult}
+            startStationId={startStation?.id}
+            endStationId={endStation?.id}
+            viaStationIds={viaStations.map(v => v.id)}
+            onStationClick={handleMapStationClick}
+            onClearRoute={handleClear}
           />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>

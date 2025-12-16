@@ -9,29 +9,28 @@ import {
     Chip,
     Paper,
     Stack,
-    Divider,
-    useTheme
+    useTheme,
+    Divider
 } from '@mui/material';
 import {
     TripOrigin,
     LocationOn,
     DirectionsSubway,
     TransferWithinAStation,
-    AccessTime,
     Straighten,
-    SwapCalls
+    Flag
 } from '@mui/icons-material';
 import type { RouteResult, RouteStep } from '../../types';
 import { graphService } from '../../services/Graph';
 
 interface RouteTimelineProps {
     result: RouteResult;
+    viaStationIds?: string[];
 }
 
-export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result }) => {
+export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result, viaStationIds = [] }) => {
     const theme = useTheme();
 
-    // 格式化时间 (秒 -> 分钟)
     const formatTime = (seconds: number) => {
         const mins = Math.ceil(seconds / 60);
         if (mins < 60) return `${mins}分钟`;
@@ -40,93 +39,175 @@ export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result }) =>
         return `${hours}小时${remainingMins}分钟`;
     };
 
-    // 获取线路颜色
     const getLineColor = (lineId?: string) => {
-        if (!lineId) return theme.palette.grey[500];
+        if (!lineId) return theme.palette.grey[400];
         return graphService.getLineColor(lineId);
     };
 
-    // 自定义 Step Icon
     const StepIcon = (props: { step: RouteStep }) => {
         const { step } = props;
         const color = getLineColor(step.lineId);
+        const isVia = viaStationIds.includes(step.stationId);
 
-        if (step.type === 'start') return <TripOrigin sx={{ color: theme.palette.success.main }} />;
-        if (step.type === 'end') return <LocationOn sx={{ color: theme.palette.error.main }} />;
-        if (step.type === 'transfer') return <TransferWithinAStation sx={{ color: theme.palette.warning.main }} />;
+        // 统一容器宽度为 32px，确保中心在 16px
+        const IconWrapper = ({ children }: { children: React.ReactNode }) => (
+            <Box sx={{
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1,
+                bgcolor: 'background.paper'
+            }}>
+                {children}
+            </Box>
+        );
 
-        // 普通移动步骤，显示线路颜色的小圆点
+        if (step.type === 'start') {
+            return (
+                <IconWrapper>
+                    <TripOrigin sx={{ color: theme.palette.success.main, fontSize: 24 }} />
+                </IconWrapper>
+            );
+        }
+
+        if (step.type === 'end') {
+            return (
+                <IconWrapper>
+                    <LocationOn sx={{ color: theme.palette.error.main, fontSize: 24 }} />
+                </IconWrapper>
+            );
+        }
+
+        if (isVia) {
+            return (
+                <IconWrapper>
+                    <Flag sx={{ color: theme.palette.warning.main, fontSize: 22 }} />
+                </IconWrapper>
+            );
+        }
+
+        if (step.type === 'transfer') {
+            return (
+                <IconWrapper>
+                    <TransferWithinAStation sx={{ color: theme.palette.info.main, fontSize: 20 }} />
+                </IconWrapper>
+            );
+        }
+
         return (
-            <Box
-                sx={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    bgcolor: color,
-                    border: `2px solid ${theme.palette.background.paper}`,
-                    boxShadow: 1
-                }}
-            />
+            <IconWrapper>
+                <Box
+                    sx={{
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        bgcolor: 'background.paper',
+                        border: `4px solid ${color}`,
+                        boxShadow: '0 0 0 2px rgba(0,0,0,0.05)'
+                    }}
+                />
+            </IconWrapper>
         );
     };
 
     return (
         <Box>
-            {/* 1. 概览卡片 */}
             <Paper
                 elevation={0}
-                variant="outlined"
                 sx={{
-                    p: 2,
+                    p: 3,
                     mb: 3,
-                    bgcolor: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
-                    borderRadius: 3
+                    background: `linear-gradient(135deg, ${theme.palette.primary.container} 0%, ${theme.palette.surface.containerHigh} 100%)`,
+                    color: 'primary.onContainer',
+                    borderRadius: 4,
+                    position: 'relative',
+                    overflow: 'hidden'
                 }}
             >
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                    <Typography variant="h5" fontWeight="bold">
-                        {formatTime(result.totalTimeSec)}
-                    </Typography>
+                <Box sx={{
+                    position: 'absolute',
+                    top: -20,
+                    right: -20,
+                    width: 100,
+                    height: 100,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    opacity: 0.1
+                }} />
+
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Box>
+                        <Typography variant="caption" sx={{ opacity: 0.8, fontWeight: 'bold', letterSpacing: 1 }}>
+                            预计耗时
+                        </Typography>
+                        <Typography variant="h4" fontWeight="800" sx={{ lineHeight: 1 }}>
+                            {formatTime(result.totalTimeSec)}
+                        </Typography>
+                    </Box>
+
                     <Chip
+                        icon={<TransferWithinAStation style={{ color: 'inherit' }} />}
                         label={`${result.totalTransfers} 次换乘`}
-                        size="small"
-                        sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'inherit' }}
+                        sx={{
+                            bgcolor: 'background.paper',
+                            color: 'primary.main',
+                            fontWeight: 'bold',
+                            boxShadow: 1
+                        }}
                     />
                 </Stack>
 
-                <Stack direction="row" spacing={2} sx={{ opacity: 0.9 }}>
-                    <Box display="flex" alignItems="center" gap={0.5}>
-                        <Straighten fontSize="small" />
-                        <Typography variant="body2">{result.totalDistanceKm} km</Typography>
+                <Divider sx={{ borderColor: 'primary.main', opacity: 0.1, my: 1 }} />
+
+                <Stack direction="row" spacing={3}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Straighten fontSize="small" sx={{ opacity: 0.7 }} />
+                        <Typography variant="body2" fontWeight="medium">{result.totalDistanceKm} km</Typography>
                     </Box>
-                    <Box display="flex" alignItems="center" gap={0.5}>
-                        <DirectionsSubway fontSize="small" />
-                        <Typography variant="body2">{result.totalStops} 站</Typography>
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <DirectionsSubway fontSize="small" sx={{ opacity: 0.7 }} />
+                        <Typography variant="body2" fontWeight="medium">{result.totalStops} 站</Typography>
                     </Box>
                 </Stack>
             </Paper>
 
-            {/* 2. 路线详情 (Stepper) */}
-            <Stepper orientation="vertical" sx={{ px: 1 }}>
+            <Stepper
+                orientation="vertical"
+                connector={null}
+                sx={{
+                    px: 1,
+                    '& .MuiStepContent-root': {
+                        borderLeftWidth: 2,
+                        borderLeftStyle: 'dashed',
+                        borderColor: 'outlineVariant',
+                        ml: '15px', 
+                        pl: 3,
+                    }
+                }}
+            >
                 {result.steps.map((step, index) => {
                     const isLast = index === result.steps.length - 1;
                     const lineColor = getLineColor(step.lineId);
+                    const isVia = viaStationIds.includes(step.stationId);
 
                     return (
                         <Step key={index} active expanded>
                             <StepLabel
                                 StepIconComponent={() => <StepIcon step={step} />}
-                                sx={{ py: 0 }}
+                                sx={{ py: 0, cursor: 'pointer' }}
                             >
                                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                                    <Typography variant="subtitle1" fontWeight={step.type === 'transfer' ? 'bold' : 'medium'}>
+                                    <Typography
+                                        variant="subtitle1"
+                                        fontWeight={step.type === 'transfer' || step.type === 'start' || step.type === 'end' || isVia ? 'bold' : 'medium'}
+                                    >
                                         {step.type === 'transfer'
                                             ? `在 ${step.stationId} 换乘`
                                             : step.stationId}
                                     </Typography>
 
-                                    {/* 如果是换乘或起点，显示线路徽章 */}
                                     {(step.type === 'start' || step.type === 'transfer') && step.lineId && (
                                         <Chip
                                             label={`${step.lineId}号线`}
@@ -143,24 +224,72 @@ export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result }) =>
                                 </Box>
                             </StepLabel>
 
-                            <StepContent sx={{ borderLeft: `2px solid ${lineColor}`, ml: '11px', pl: 3, py: 1 }}>
-                                {step.type === 'move' && (
-                                    <Box sx={{ color: 'text.secondary', my: 0.5 }}>
-                                        <Typography variant="caption" display="block">
-                                            乘坐 {step.lineId}号线
-                                        </Typography>
-                                        <Typography variant="caption" display="block">
-                                            {step.distanceKm} km · {Math.ceil(step.durationSec / 60)} 分钟
-                                        </Typography>
-                                    </Box>
-                                )}
+                            {!isLast && (
+                                <StepContent sx={{
+                                    borderColor: lineColor,
+                                    mt: 0,
+                                    pb: 2
+                                }}>
+                                    {/* --- 新增：途经点卡片 --- */}
+                                    {isVia && (
+                                        <Paper variant="outlined" sx={{
+                                            p: 1.5,
+                                            mt: 1,
+                                            mb: 1, // 增加底部间距，与后续的移动信息隔开
+                                            // 使用 warning 容器色，符合 MD3 语义，且与 Flag 图标颜色呼应
+                                            bgcolor: 'warning.container', // 浅橙色背景
+                                            color: 'warning.onContainer', // 深橙色文字
+                                            borderRadius: 3,
+                                            border: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1.5
+                                        }}>
+                                            <Flag fontSize="small" color="inherit" />
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">途经此站</Typography>
+                                                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                                                    在此站经过
+                                                </Typography>
+                                            </Box>
+                                        </Paper>
+                                    )}
 
-                                {step.type === 'transfer' && (
-                                    <Typography variant="caption" color="warning.main">
-                                        站内换乘 · 约 {Math.ceil(step.durationSec / 60)} 分钟
-                                    </Typography>
-                                )}
-                            </StepContent>
+                                    {/* 移动段信息 */}
+                                    {step.type === 'move' && (
+                                        <Box sx={{ color: 'text.secondary', my: 0.5 }}>
+                                            <Typography variant="caption" display="block">
+                                                乘坐 {step.lineId}号线
+                                            </Typography>
+                                            <Typography variant="caption" display="block">
+                                                {step.distanceKm} km · {Math.ceil(step.durationSec / 60)} 分钟
+                                            </Typography>
+                                        </Box>
+                                    )}
+
+                                    {/* 换乘卡片 */}
+                                    {step.type === 'transfer' && (
+                                        <Paper variant="outlined" sx={{
+                                            p: 1.5,
+                                            mt: 1,
+                                            bgcolor: 'surface.containerHighest',
+                                            borderRadius: 3,
+                                            border: 'none',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 1
+                                        }}>
+                                            <TransferWithinAStation fontSize="small" color="primary" />
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">站内换乘</Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    步行约 {Math.ceil(step.durationSec / 60)} 分钟
+                                                </Typography>
+                                            </Box>
+                                        </Paper>
+                                    )}
+                                </StepContent>
+                            )}
                         </Step>
                     );
                 })}

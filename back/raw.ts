@@ -56,13 +56,11 @@ export const keyCoordinates: KeyCoordinate[] = [
     { id: "高家冲", x: 200, y: 1800 } // 填补左下角空白
 ];
 
-// 采用 Material Design Tonal Palette 40/50 色值，确保对比度和美观度
-// 对应 Blue, Red, Green, Purple, Yellow, Teal, Orange, Pink 主题的深色变体
 export const rawLines: RawLine[] = [
     {
         id: "1",
         name: "1号线",
-        color: "#006495", // Material Blue 40 (深蓝)
+        color: "#3498DB",
         stations: [
             "迈皋桥", "红山动物园", "南京站", "新模范马路", "玄武门", "鼓楼", "珠江路", "新街口",
             "张府园", "三山街", "中华门", "安德门", "天隆寺", "软件大道", "花神庙", "南京南站",
@@ -73,7 +71,7 @@ export const rawLines: RawLine[] = [
     {
         id: "2",
         name: "2号线",
-        color: "#BA1A1A", // Material Red 40 (深红 - Autumn/Summer)
+        color: "#E74C3C",
         stations: [
             "油坊桥", "雨润大街", "元通", "奥体东", "兴隆大街", "集庆门大街", "云锦路", "莫愁湖",
             "汉中门", "上海路", "新街口", "大行宫", "西安门", "明故宫", "穆斯林", "下马坊",
@@ -84,7 +82,7 @@ export const rawLines: RawLine[] = [
     {
         id: "3",
         name: "3号线",
-        color: "#006D3B", // Material Green 40 (深绿 - Green)
+        color: "#2ECC71",
         stations: [
             "林场", "星火路", "东大成贤学院", "泰冯路", "天润城", "柳洲东路", "上元门", "五塘广场",
             "小市", "南京站", "新庄", "鸡鸣寺", "浮桥", "大行宫", "常府街", "夫子庙", "武定门",
@@ -95,7 +93,7 @@ export const rawLines: RawLine[] = [
     {
         id: "4",
         name: "4号线",
-        color: "#6F43C0", // Material Purple 40 (深紫)
+        color: "#9B59B6",
         stations: [
             "龙江", "草场门", "云南路", "鼓楼", "鸡鸣寺", "九华山", "岗子村", "蒋王庙", "王家湾",
             "聚宝山", "徐庄", "金马路", "汇通路", "灵山", "东流", "孟北", "西岗桦墅", "仙林湖"
@@ -104,7 +102,7 @@ export const rawLines: RawLine[] = [
     {
         id: "10",
         name: "10号线",
-        color: "#725C00", // Material Gold 40 (深金/褐 - Autumn) - 避免亮黄看不清
+        color: "#F1C40F",
         stations: [
             "安德门", "小行", "中胜", "元通", "奥体中心", "梦都大街", "绿博园", "江心洲", "临江",
             "浦口万汇城", "南京工业大学", "龙华路", "文德路", "雨山路"
@@ -113,7 +111,7 @@ export const rawLines: RawLine[] = [
     {
         id: "S1",
         name: "S1号线",
-        color: "#006A60", // Material Teal 40 (深青)
+        color: "#1ABC9C",
         stations: [
             "南京南站", "翠屏山", "河海大学", "吉印大道", "正方中路", "翔宇路北", "翔宇路南", "禄口机场"
         ]
@@ -121,7 +119,7 @@ export const rawLines: RawLine[] = [
     {
         id: "S8",
         name: "S8号线",
-        color: "#964900", // Material Orange 40 (深橙/棕 - Autumn)
+        color: "#E67E22",
         stations: [
             "泰冯路", "泰山新村", "高新开发区", "信息工程大学", "卸甲甸", "大厂", "葛塘", "长芦",
             "化工园", "六合开发区", "龙池", "雄州", "凤凰山公园", "方州广场", "沈桥", "八百桥", "金牛湖"
@@ -130,7 +128,7 @@ export const rawLines: RawLine[] = [
     {
         id: "S3",
         name: "S3号线",
-        color: "#9D2558", // Material Pink 40 (深粉/洋红 - Summer)
+        color: "#D81B60",
         stations: [
             "南京南站", "景明佳园", "铁心桥", "春江路", "贾西", "油坊桥", "永初路", "平良大街",
             "吴侯街", "高庙路", "天保", "刘村", "马骡圩", "兰花塘", "双垅", "石碛河", "桥林新城",
