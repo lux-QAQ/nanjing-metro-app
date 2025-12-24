@@ -1,6 +1,6 @@
 import React from 'react';
-import { Paper, Tooltip, IconButton, Divider, Box, useTheme, Fade } from '@mui/material';
-import { Mouse, TripOrigin, AddLocation, LocationOn, Clear, AltRoute } from '@mui/icons-material';
+import { Paper, Tooltip, IconButton, Divider, useTheme, Fade } from '@mui/material';
+import { Mouse, TripOrigin, AddLocation, LocationOn, Clear } from '@mui/icons-material';
 
 interface MapToolbarProps {
     selectionMode: 'auto' | 'start' | 'end' | 'via';

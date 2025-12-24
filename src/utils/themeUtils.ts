@@ -4,8 +4,8 @@ import {
   SchemeTonalSpot, 
   Hct
 } from '@material/material-color-utilities';
-// 修复：使用 import type，否则会导致 "does not provide an export" 运行时错误
-import type { PaletteOptions } from '@mui/material';
+
+
 
 // 将 MCU 的 Scheme 转换为 MUI 的 PaletteOptions
 const mapSchemeToPalette = (scheme: any, mode: 'light' | 'dark') => {

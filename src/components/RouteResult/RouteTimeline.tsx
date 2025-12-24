@@ -182,7 +182,7 @@ export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result, viaS
                         borderLeftWidth: 2,
                         borderLeftStyle: 'dashed',
                         borderColor: 'outlineVariant',
-                        ml: '15px', 
+                        ml: '15px',
                         pl: 3,
                     }
                 }}
@@ -230,7 +230,7 @@ export const RouteResultTimeline: React.FC<RouteTimelineProps> = ({ result, viaS
                                     mt: 0,
                                     pb: 2
                                 }}>
-                                    {/* --- 新增：途经点卡片 --- */}
+                                    {/*  新增：途经点卡片  */}
                                     {isVia && (
                                         <Paper variant="outlined" sx={{
                                             p: 1.5,

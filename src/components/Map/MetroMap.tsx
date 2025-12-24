@@ -80,7 +80,7 @@ export const MetroMap: React.FC<MetroMapProps> = ({
 
     const onEvents = useMemo(() => ({
         click: handleMapClick,
-        dataZoom: (params: any) => {
+        dataZoom: (_: any) => {
             const chart = chartRef.current?.getEchartsInstance();
             if (chart) {
                 const option = chart.getOption() as any;

@@ -1,7 +1,7 @@
 import { createTheme, type ThemeOptions, type PaletteColorOptions } from '@mui/material/styles';
 import { generateMd3Palette } from './utils/themeUtils';
 
-// --- 1. 扩展 MUI 类型定义以支持 MD3 ---
+//  1. 扩展 MUI 类型定义以支持 MD3 
 declare module '@mui/material/styles' {
   interface Palette {
     tertiary: PaletteColor;
@@ -55,7 +55,7 @@ declare module '@mui/material/styles' {
   }
 }
 
-// --- 2. 基础组件样式覆盖 ---
+//  2. 基础组件样式覆盖 
 const baseOptions: ThemeOptions = {
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
@@ -168,7 +168,7 @@ const baseOptions: ThemeOptions = {
   },
 };
 
-// --- 3. 动态主题生成函数 ---
+//  3. 动态主题生成函数 
 export const getAppTheme = (mode: 'light' | 'dark', sourceColor: string) => {
   const md3Palette = generateMd3Palette(sourceColor, mode);
 

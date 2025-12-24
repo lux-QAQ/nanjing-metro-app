@@ -1,5 +1,5 @@
 import type { Station, Line, Connection } from '../types';
-import { rawLines, keyCoordinates, type RawLine } from './raw';
+import { rawLines, keyCoordinates } from './raw';
 
 // 1. 确定性随机数生成器 (Seed Random)
 class SeededRandom {
@@ -16,7 +16,7 @@ class SeededRandom {
     }
 }
 
-const rng = new SeededRandom(12345);
+//const rng = new SeededRandom(12345);
 
 // 2. 坐标插值逻辑
 function generateStationsAndLines(): { stations: Station[], lines: Line[] } {

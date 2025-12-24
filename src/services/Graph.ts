@@ -30,7 +30,7 @@ export class MetroGraph {
         this.lines.clear();
     }
 
-    // --- 节点操作 (CRUD) ---
+    //  节点操作 (CRUD) 
 
     public addStation(station: Station) {
         if (!this.stations.has(station.id)) {
@@ -73,7 +73,7 @@ export class MetroGraph {
         }
     }
 
-    // --- 边操作 (CRUD) ---
+    //  边操作 (CRUD) 
 
     public addEdge(connection: Connection) {
         // 确保起点和终点存在
@@ -121,13 +121,13 @@ export class MetroGraph {
         return this.adjList.get(id) || [];
     }
 
-    // --- 辅助查询 ---
+    //  辅助查询 
 
     public getLineColor(lineId: string): string {
         return this.lines.get(lineId)?.color || '#999';
     }
 
-    // --- ECharts 适配 ---
+    //  ECharts 适配 
 
     /**
      * 转换为 ECharts Graph 需要的数据格式

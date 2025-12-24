@@ -1,7 +1,7 @@
 import { graphService } from './Graph';
-import type { AlgorithmConfig, RouteResult, RouteStep, Connection } from '../types';
+import type { AlgorithmConfig, RouteResult, RouteStep } from '../types';
 
-// --- 辅助类：优先队列 ---
+//  辅助类：优先队列 
 class PriorityQueue<T> {
   private values: { val: T; priority: number }[] = [];
 
@@ -23,10 +23,10 @@ class PriorityQueue<T> {
   }
 }
 
-// --- 核心算法服务 ---
+//  核心算法服务 
 
 export class RouteFinder {
-  
+
   /**
    * 主入口：计算路径
    */
@@ -76,13 +76,13 @@ export class RouteFinder {
     // 分段计算
     for (let i = 0; i < waypoints.length - 1; i++) {
       const segStart = waypoints[i];
-      const segEnd = waypoints[i+1];
-      
+      const segEnd = waypoints[i + 1];
+
       // 递归调用获取子路径 (临时清空 viaStations)
       const subConfig = { ...config, viaStations: [] };
       // 这里我们需要直接调用内部算法获取 path，而不是 calculate，因为 calculate 会返回 Result 对象
       let segPath: string[] | null = null;
-      
+
       switch (config.strategy) {
         case 'min_stops':
           segPath = this.bfs(segStart, segEnd);
@@ -102,7 +102,7 @@ export class RouteFinder {
       // 合并结果
       if (i > 0) {
         // 去掉重复的起点 (上一段的终点 = 这一段的起点)
-        combinedPath.push(...segPath.slice(1)); 
+        combinedPath.push(...segPath.slice(1));
       } else {
         combinedPath.push(...segPath);
       }
@@ -115,21 +115,26 @@ export class RouteFinder {
    * 策略1: 最少站数 (BFS)
    */
   private bfs(startId: string, endId: string): string[] | null {
+    // 初始化数据结构
     const queue: string[][] = [[startId]];
     const visited = new Set<string>([startId]);
 
     while (queue.length > 0) {
+      // 2. 出队：取出最早加入的路径 (FIFO) 
+      // shift是移除数组的第一个元素并返回该元素
       const path = queue.shift()!;
       const node = path[path.length - 1];
-
+      // 3. 终点检查：一旦碰到终点，立即返回，这就是最短路径
       if (node === endId) {
         return path;
       }
-
+      // 4. 获取邻居
       const neighbors = graphService.getNeighbors(node);
       for (const edge of neighbors) {
+        // 5. 过滤已访问节点
         if (!visited.has(edge.to)) {
           visited.add(edge.to);
+          // 6. 路径延伸并入队
           queue.push([...path, edge.to]);
         }
       }
@@ -143,23 +148,23 @@ export class RouteFinder {
    */
   private dijkstra(startId: string, endId: string, config: AlgorithmConfig, mode: 'transfers' | 'time'): string[] | null {
     interface State {
-      node: string;
-      path: string[];
-      cost: number;
-      lastLine: string | null; // 关键：记录到达该点时的线路
+      node: string; // 当前节点
+      path: string[]; // 到达该节点的路径
+      cost: number;   // 当前累计成本
+      lastLine: string | null; // 关键：我是坐哪条线到达这个站的？
     }
 
     const pq = new PriorityQueue<State>();
-    pq.enqueue({ 
-      node: startId, 
-      path: [startId], 
-      cost: 0, 
+    pq.enqueue({
+      node: startId,
+      path: [startId],
+      cost: 0,
       lastLine: null
     }, 0);
 
     // 记录最小代价: key = `${node}_${line}`
     // 特殊情况：起点没有 line，key = `${startId}_null`
-    const minCost = new Map<string, number>(); 
+    const minCost = new Map<string, number>();
 
     while (!pq.isEmpty()) {
       const current = pq.dequeue()!;
@@ -177,12 +182,12 @@ export class RouteFinder {
       const neighbors = graphService.getNeighbors(node);
       for (const edge of neighbors) {
         let newCost = cost;
-        
+
         // 判断是否换乘
         // 如果 lastLine 为 null (起点出发)，不算换乘
         const isTransfer = lastLine !== null && lastLine !== edge.line;
 
-        // --- 成本计算 ---
+        //  成本计算 
         if (mode === 'transfers') {
           // 策略：最少换乘
           // 换乘惩罚 1000，站点惩罚 1
@@ -194,7 +199,7 @@ export class RouteFinder {
           const dist = config.useRealDistance ? edge.distanceKm : 1;
           const travelTimeH = dist / config.velocityKmH;
           const travelTimeSec = travelTimeH * 3600;
-          
+
           newCost += travelTimeSec;
 
           // 2. 节点停留/换乘时间 (发生在 node 站点)
@@ -217,7 +222,7 @@ export class RouteFinder {
         // 只有当成本更低时才加入队列
         const nextStateKey = `${edge.to}_${edge.line}`;
         if (!minCost.has(nextStateKey) || minCost.get(nextStateKey)! > newCost) {
-           pq.enqueue({
+          pq.enqueue({
             node: edge.to,
             path: [...path, edge.to],
             cost: newCost,
@@ -239,16 +244,16 @@ export class RouteFinder {
     let totalTime = 0;
     let totalDist = 0;
     let transfers = 0;
-    
+
     let currentLine: string | null = null;
 
     for (let i = 0; i < path.length - 1; i++) {
       const u = path[i];
-      const v = path[i+1];
-      
+      const v = path[i + 1];
+
       // 查找连接 u -> v 的边
       const neighbors = graphService.getNeighbors(u);
-      
+
       // 贪心选择线路：
       // 如果当前已经在某条线上，且该线能通往下一站，优先保持（避免不必要的“假换乘”）
       // 否则，选择任意一条能通往下一站的线路
@@ -260,20 +265,20 @@ export class RouteFinder {
         // 且共线段通常物理属性相同，选任一即可。
         edge = neighbors.find(e => e.to === v);
       }
-      
+
       if (!edge) {
         console.error(`Missing connection between ${u} and ${v}`);
-        break; 
+        break;
       }
 
-      // --- 1. 计算节点停留/换乘消耗 (在 u 站发生) ---
+      //  1. 计算节点停留/换乘消耗 (在 u 站发生) 
       if (i > 0) { // 起点没有“到达后停留”
         if (currentLine !== null && currentLine !== edge.line) {
           // 发生换乘
           transfers++;
           const transferCost = config.transferTimeSec; // T3
           totalTime += transferCost;
-          
+
           steps.push({
             type: 'transfer',
             stationId: u,
@@ -294,15 +299,15 @@ export class RouteFinder {
       // 更新当前线路
       currentLine = edge.line;
 
-      // --- 2. 计算行驶消耗 (u -> v) ---
+      //  2. 计算行驶消耗 (u -> v) 
       const dist = config.useRealDistance ? edge.distanceKm : 1;
       const travelTimeH = dist / config.velocityKmH;
       const travelTimeSec = travelTimeH * 3600;
-      
+
       totalDist += dist;
       totalTime += travelTimeSec;
 
-      // --- 3. 记录步骤 ---
+      //  3. 记录步骤 
       if (i === 0) {
         steps.push({
           type: 'start',

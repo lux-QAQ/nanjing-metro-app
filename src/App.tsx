@@ -10,8 +10,8 @@ import { connectionsData } from './data/connections';
 import { graphService } from './services/Graph';
 import { routeFinder } from './services/Algorithms';
 import type { AlgorithmConfig, RouteResult, Station } from './types';
-import { Box, CircularProgress, Typography, Paper } from '@mui/material';
-import { DirectionsSubway, TripOrigin, LocationOn } from '@mui/icons-material'; 
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { DirectionsSubway, TripOrigin, LocationOn } from '@mui/icons-material';
 
 const AppContent: React.FC = () => {
   const { isDarkMode, toggleTheme } = useThemeContext();
@@ -28,7 +28,7 @@ const AppContent: React.FC = () => {
   const viaStations = selectedStations.length > 2 ? selectedStations.slice(1, -1) : [];
 
 
-  // 为了节省篇幅，这里省略中间未修改的 handler 函数，请保留原有的 handleMapStationClick 等函数
+
   const handleMapStationClick = (stationId: string, mode: 'start' | 'end' | 'via' | 'auto') => {
     const station = graphService.getStation(stationId);
     if (!station) return;
@@ -205,7 +205,7 @@ const AppContent: React.FC = () => {
                 viaStationIds={viaStations.map(v => v.id)}
               />
             ) : (
-              // --- 美化后的空状态 ---
+              //  美化后的空状态 
               <Box sx={{
                 display: 'flex',
                 flexDirection: 'column',

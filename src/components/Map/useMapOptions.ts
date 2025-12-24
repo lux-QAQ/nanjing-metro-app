@@ -215,7 +215,7 @@ export const useMapOptions = ({
                     const color = params.color;
                     const name = params.name;
                     const isTransfer = params.data.isTransfer;
-                    const lines = params.data.lines || []; // 假设节点数据里有所属线路信息
+                    //const lines = params.data.lines || []; 
 
                     // 构造 MD3 风格的 Tooltip HTML
                     // 注意：这里使用了内联样式，因为 ECharts tooltip 在 React 组件树之外
