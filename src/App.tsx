@@ -117,7 +117,7 @@ const AppContent: React.FC = () => {
     setRouteResult(null);
   };
 
-  // 新增：处理交换逻辑
+  // 处理交换逻辑
   const handleSwapStations = () => {
     // 只有当至少有两个站点（起点和终点）时才能交换
     if (selectedStations.length < 2) return;

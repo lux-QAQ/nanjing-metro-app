@@ -4,7 +4,7 @@ import {
   ToggleButton, ToggleButtonGroup, IconButton, Collapse,
   Stack, Tooltip, Fade, Divider, useTheme,
   Stepper, Step, StepLabel, StepContent,
-  Zoom // 新增：引入 Zoom 组件用于按钮动效
+  Zoom
 } from '@mui/material';
 import {
   DirectionsSubway, SwapVert, Settings, AddLocation, Delete,
@@ -112,7 +112,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     </IconWrapper>
   );
 
-  // 新增：处理交换点击
+  // 处理交换点击
   const handleSwapClick = () => {
     setSwapRotation(prev => prev + 180);
     onSwap();

@@ -61,7 +61,7 @@ export class RouteFinder {
 
     if (!path) return null;
 
-    // 4. 统一计算物理指标 (严谨逻辑)
+    // 4. 统一计算物理指标 
     return this.calculatePathMetrics(path, config);
   }
 
@@ -197,10 +197,10 @@ export class RouteFinder {
           // 策略：最短时间 (提高要求)
           // 1. 行驶时间 (Distance / v)
           const dist = config.useRealDistance ? edge.distanceKm : 1;
-          const travelTimeH = dist / config.velocityKmH;
-          const travelTimeSec = travelTimeH * 3600;
+          const travelTimeH = dist / config.velocityKmH; // t = d / v
+          const travelTimeSec = travelTimeH * 3600; // 转换为秒
 
-          newCost += travelTimeSec;
+          newCost += travelTimeSec; // 加上行驶时间
 
           // 2. 节点停留/换乘时间 (发生在 node 站点)
           if (lastLine !== null) { // 起点没有停留时间
@@ -211,8 +211,10 @@ export class RouteFinder {
               // 不换乘：消耗 t1 (中转站) 或 T2 (非中转站)
               const station = graphService.getStation(node);
               if (station?.isTransfer) {
+                // 情况 B1: 在中转站停车
                 newCost += config.dwellTimeTransferSec; // t1
               } else {
+                // 情况 B2: 在普通站停车
                 newCost += config.dwellTimeNormalSec;   // T2
               }
             }
@@ -236,7 +238,7 @@ export class RouteFinder {
   }
 
   /**
-   * 统一物理指标计算器 (严谨逻辑)
+   * 统一物理指标计算器 
    * 根据生成的 Path，回放整个过程，计算精确的时间、距离和步骤
    */
   private calculatePathMetrics(path: string[], config: AlgorithmConfig): RouteResult {

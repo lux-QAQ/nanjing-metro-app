@@ -147,7 +147,7 @@ export class MetroGraph {
             const mainLineId = station.lines[0];
             const lineColor = this.getLineColor(mainLineId);
 
-            // 新增：获取该站点在主线路中的索引，用于计算文字交错位置
+            // 获取该站点在主线路中的索引，用于计算文字交错位置
             const mainLine = this.lines.get(mainLineId);
             const stationIndex = mainLine ? mainLine.stations.indexOf(station.id) : 0;
 

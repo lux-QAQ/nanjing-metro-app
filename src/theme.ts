@@ -110,7 +110,7 @@ const baseOptions: ThemeOptions = {
         }),
       },
     },
-    // 新增：美化 Autocomplete 下拉列表
+    // 美化 Autocomplete 下拉列表
     MuiAutocomplete: {
       styleOverrides: {
         paper: ({ theme }) => ({
