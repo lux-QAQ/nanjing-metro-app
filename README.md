@@ -34,7 +34,7 @@
 ## 核心算法
 
 不仅仅是好看，我们构建了严谨的图论算法服务来解决复杂的地铁换乘问题。
-
+![BFS](/docs/img/BFS.png)
 ![Algorithm](docs/img/dijkstra.png)
 
 
@@ -48,6 +48,28 @@
 *   **UI 组件库**: MUI (Material UI) v5 + Emotion
 *   **可视化**: ECharts (高性能 Canvas 渲染)
 *   **图标**: MUI Icons Material
+
+
+## 系统架构设计
+
+系统采用经典的 **分层架构 (Layered Architecture)**，实现了视图、逻辑与数据的解耦。
+![arch](/docs/img/arch.png)
+
+> 详细的架构分析请见 [arch.md](arch.md)
+
+### 架构分层图
+
+*   **表现层 (Presentation Layer)**: 负责 UI 渲染与用户交互。
+    *   *Components*: Layout, Sidebar, Map, RouteResult
+    *   *Context*: ThemeContext (全局主题状态)
+*   **容器层 (Container Layer)**: 负责业务状态管理与组件协调。
+    *   *App.tsx*: 核心控制器，管理站点选择、路由计算结果、侧边栏联动。
+*   **业务逻辑层 (Service Layer)**: 封装核心算法与图操作。
+    *   *GraphService*: 图数据结构的维护、ECharts 数据转换。
+    *   *RouteFinder*: 路径规划算法实现（最短路径、最少换乘、途经点处理）。
+*   **数据层 (Data Layer)**: 静态数据与生成逻辑。
+    *   *Static Data*: Stations, Lines.
+    *   *Generator*: 坐标插值与连接关系生成。
 
 ## 🚀 快速开始
 
@@ -75,3 +97,6 @@ Designed with ❤️ in Nanjing.
 
 This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. You can view the full license [here](LICENSE).
 根据该License严禁将该项目用于任何商用目的。
+
+
+![CC BY-NC License](https://licensebuttons.net/l/by-nc/4.0/88x31.png)

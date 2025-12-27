@@ -17,7 +17,7 @@
 系统采用经典的 **分层架构 (Layered Architecture)**，实现了视图、逻辑与数据的解耦。
 
 ### 2.1 架构分层图
-
+![arch](/docs/img/arch.png)
 *   **表现层 (Presentation Layer)**: 负责 UI 渲染与用户交互。
     *   *Components*: Layout, Sidebar, Map, RouteResult
     *   *Context*: ThemeContext (全局主题状态)
@@ -55,6 +55,12 @@
     *   **高级特性**:
         *   `calculatePathWithVia()`: 支持途经点。将路径拆分为 `Start -> Via -> End` 分段计算后合并。
         *   `calculatePathMetrics()`: 统一计算物理指标（总耗时、总距离、换乘次数），模拟真实物理世界的停站时间 ($T_1, T_2$) 和换乘耗时 ($T_3$)。
+
+![bfs](/docs/img/BFS.png)
+
+
+![dijkstra](/docs/img/dijkstra.png)
+
 
 ### 3.2 表现层 (UI/UX)
 
