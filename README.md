@@ -6,6 +6,7 @@
 
 ![index](docs/img/1.png)
 
+访问[在线演示](https://lux-qaq.github.io/nanjing-metro-app/)来体验完整功能。
 
 ## 功能
 - [x] 最少站数、最少换乘与最短时间三种路径规划算法
