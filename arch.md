@@ -1,145 +1,149 @@
-我打算使用React + TypeScript以及MUI制作一个Material UI风格的“南京地铁通APP”
-我已经安装了React + TypeScript
-以及@mui/material @emotion/react @emotion/styled还有ECharts，核心的几个组件都已经安装了
+# 南京地铁通 (Nanjing Metro App) 项目架构分析
 
-下面是需求，不一定需要立刻实现，但是需要考虑到可扩展性
-基本要求：
-(1) 存储南京地铁线路站点信息。
-(2) 给定起点站和终点站，假设相邻站点路径长度相等，求路径最短的地铁乘坐方案；
-(3) 给定起点站和终点站，假设相邻站点路径长度相等，求换乘次数最少的地铁乘坐方案，若存在多条换乘次数相同的乘坐方案，则给出换乘次数最少且路径长度最短的乘坐方案。
-提高要求：
-在实际应用中，相邻站点的距离并不相等，假设中转站地铁停留时间为t1，非中转站地铁停留时间为T2，地铁换乘一次的时间消耗为T3（不考虑等待地铁的时间），地铁平均速度为v，相邻站点的路径长度已知，试求：
-(1)在给定起点站和终点站的情况下，求乘坐时间最短的地铁乘坐方案。
-(2)设计可视化的查询界面。
-(3)可以在界面对地铁图编辑和交互。
-(4)添加途经站的约束下求解之前的问题
+## 1. 项目概述
 
+本项目是一个基于 Web 的现代化地铁线路查询与可视化系统。采用 **React + TypeScript** 构建，使用 **Material UI (MUI)** 实现 Material Design 3 风格的响应式界面，并利用 **ECharts** 实现高性能的地铁拓扑图可视化。
 
-已经拥有了一个坚实的基础（React + TypeScript + Vite + MUI + ECharts）。demo.html 提供了一个很好的算法和可视化原型，但要将其转化为一个可扩展、现代化的 React 应用，我们需要进行系统性的重构。
+### 技术栈
+*   **核心框架**: React 18, TypeScript, Vite
+*   **UI 组件库**: @mui/material, @mui/icons-material, @emotion
+*   **可视化**: echarts, echarts-for-react
+*   **算法逻辑**: BFS (广度优先搜索), Dijkstra (最短路径算法)
 
-以下是针对你的需求（包括基础和提高要求）的详细分析和规划。
+---
 
-### 1. 核心分析与架构思路
+## 2. 系统架构设计
 
-*   **数据层 (Data)**: demo.html 中的数据比较简单。为了满足“提高要求”（不同站间距、不同停站时间），我们需要设计更详细的数据结构（例如：边不仅包含连接关系，还要包含距离）。
-*   **算法层 (Service)**: 现有的 BFS 和 Dijkstra 算法需要封装成独立的 TypeScript 服务或类。特别是“途经站”功能，本质上是分段路由（起点->途经点->终点）。
-*   **视图层 (View)**:
-    *   **UI**: 使用 Material UI 组件（Drawer, Autocomplete, Card, Stepper 等）替换原生的 HTML 元素。
-    *   **可视化**: 你安装了 `ECharts`，这很好。虽然 demo.html 使用了原生 Canvas 实现力导向图，但 **ECharts 的 Graph 图表** 更适合做这种拓扑关系的可视化，且自带交互（缩放、点击、高亮），开发效率更高。当然，如果你非常喜欢 demo 中的物理弹跳效果，我们也可以把那段 Canvas 代码封装成 React 组件。鉴于你安装了 ECharts，我建议优先尝试 ECharts，或者保留 Canvas 作为备选。
+系统采用经典的 **分层架构 (Layered Architecture)**，实现了视图、逻辑与数据的解耦。
 
-### 2. 推荐的目录结构
+### 2.1 架构分层图
 
-建议在 src 下创建以下文件夹和文件：
+*   **表现层 (Presentation Layer)**: 负责 UI 渲染与用户交互。
+    *   *Components*: Layout, Sidebar, Map, RouteResult
+    *   *Context*: ThemeContext (全局主题状态)
+*   **容器层 (Container Layer)**: 负责业务状态管理与组件协调。
+    *   *App.tsx*: 核心控制器，管理站点选择、路由计算结果、侧边栏联动。
+*   **业务逻辑层 (Service Layer)**: 封装核心算法与图操作。
+    *   *GraphService*: 图数据结构的维护、ECharts 数据转换。
+    *   *RouteFinder*: 路径规划算法实现（最短路径、最少换乘、途经点处理）。
+*   **数据层 (Data Layer)**: 静态数据与生成逻辑。
+    *   *Static Data*: Stations, Lines.
+    *   *Generator*: 坐标插值与连接关系生成。
 
-```text
-src/
-├── assets/              # 静态资源（图片等）
-├── components/          # UI 组件
-│   ├── Layout/          # 布局组件 (MainLayout.tsx)
-│   ├── Map/             # 地图可视化组件 (MetroMap.tsx - 使用 ECharts 或 Canvas)
-│   ├── Sidebar/         # 侧边栏搜索组件 (SearchPanel.tsx)
-│   └── RouteResult/     # 路线结果展示 (RouteTimeline.tsx)
-├── data/                # 静态数据
-│   ├── stations.ts      # 站点数据
-│   ├── lines.ts         # 线路数据 (颜色、名称)
-│   └── connections.ts   # 拓扑结构与距离数据
-├── services/            # 核心逻辑
-│   ├── Graph.ts         # 图数据结构定义
-│   ├── Algorithms.ts    # 路由算法 (BFS, Dijkstra)
-│   └── TimeCalculator.ts# 时间计算逻辑 (处理 T1, T2, T3, v)
-├── types/               # TypeScript 类型定义
-│   └── index.ts         # Station, Route, Edge 等接口定义
-├── utils/               # 工具函数
-│   └── format.ts        # 时间/距离格式化
-├── App.tsx              # 主入口
-└── theme.ts             # MUI 主题配置 (可选)
-```
+---
 
-### 3. 需要补充安装的库
+## 3. 核心模块详细分析
 
-你已经安装了核心库，但为了更好的体验，建议补充以下库：
+### 3.1 业务逻辑层 (Services)
 
-1.  **@mui/icons-material**: MUI 的图标库，用于显示地铁、搜索、换乘等图标。
-2.  **lodash** (可选): 用于数据处理（如深拷贝、防抖等），虽然不是必须，但在处理复杂图数据时很有用。
+这是系统的核心大脑，采用**单例模式**提供服务。
 
-你可以运行以下命令安装图标库：
-```bash
-npm install @mui/icons-material
-```
+#### A. 图服务 (`src/services/Graph.ts`)
+*   **职责**: 维护地铁网络的内存模型（邻接表），提供节点查询、增删改查 API，以及将逻辑图转换为 ECharts 可视化数据。
+*   **核心类**: `MetroGraph`
+    *   `adjList`: `Map<string, Connection[]>` (邻接表存储图结构)
+    *   `stations`: `Map<string, Station>` (站点查找表)
+    *   `toEChartsData()`: 将拓扑结构转换为 Nodes/Links/Categories 供前端渲染。
 
-### 4. 详细实现规划
+#### B. 路由算法服务 (`src/services/Algorithms.ts`)
+*   **职责**: 根据用户配置（策略、物理参数）计算最优路径。
+*   **核心类**: `RouteFinder`
+    *   **策略模式**: 支持三种策略 (`min_stops`, `min_transfers`, `min_time`)。
+    *   **算法实现**:
+        *   `bfs()`: 用于最少站数查询。
+        *   `dijkstra()`: 用于最少换乘（加权图，换乘惩罚权重 1000）和最短时间（基于物理距离和速度）查询。
+    *   **高级特性**:
+        *   `calculatePathWithVia()`: 支持途经点。将路径拆分为 `Start -> Via -> End` 分段计算后合并。
+        *   `calculatePathMetrics()`: 统一计算物理指标（总耗时、总距离、换乘次数），模拟真实物理世界的停站时间 ($T_1, T_2$) 和换乘耗时 ($T_3$)。
 
-#### 第一步：定义类型 (Types)
-为了满足“提高要求”，我们需要在 `src/types/index.ts` 中定义强类型：
+### 3.2 表现层 (UI/UX)
+
+#### A. 布局系统 (`src/components/Layout`)
+*   **MainLayout**: 采用 Flex 布局，包含顶部 AppBar（毛玻璃效果）、左侧搜索栏、中间地图区、右侧结果栏。
+*   **ResizableSidebar**: 自定义组件，支持鼠标拖拽调整侧边栏宽度，增强用户体验。
+*   **ThemeSystem**:
+    *   `ThemeContext`: 管理深色模式 (Dark Mode) 和主题色 (Source Color)。
+    *   `theme.ts`: 实现了 Material Design 3 的动态调色板算法，根据选定的线路颜色自动生成配套的 UI 颜色体系。
+
+#### B. 可视化地图 (`src/components/Map`)
+*   **MetroMap**: 封装 ECharts 实例。
+*   **交互逻辑**:
+    *   点击节点触发 `onStationClick` 回调。
+    *   监听 `routeResult` 变化，自动高亮路径节点和连线，淡化非相关节点。
+
+---
+
+## 4. 数据流向 (Data Flow)
+
+### 4.1 初始化流程
+1.  `App.tsx` 加载时触发 `useEffect`。
+2.  调用 `graphService.init(stations, connections, lines)`。
+3.  图服务构建内存邻接表，标记 `isGraphReady = true`。
+
+### 4.2 路径规划流程
+1.  **用户交互**: 用户在 `SearchPanel` 选择起点、终点、途经点，或在地图上点击站点。
+2.  **状态更新**: `App.tsx` 更新 `selectedStations` 状态。
+3.  **触发搜索**: 用户点击搜索，`App.tsx` 调用 `routeFinder.calculate(start, end, config)`。
+4.  **算法执行**:
+    *   `RouteFinder` 从 `GraphService` 获取邻居节点。
+    *   执行 Dijkstra/BFS 计算路径 ID 序列。
+    *   回放路径，计算时间、距离等详细指标。
+5.  **结果分发**:
+    *   `RouteResult` 对象返回给 `App.tsx`。
+    *   `App.tsx` 将结果传递给 `RouteTimeline` (展示文字步骤) 和 `MetroMap` (绘制高亮路径)。
+    *   右侧边栏自动展开。
+
+---
+
+## 5. 关键数据结构 (Domain Model)
+
+定义在 `src/types/index.ts` 中：
 
 ```typescript
-export interface Station {
+// 站点模型
+interface Station {
   id: string;
   name: string;
-  lines: string[]; // 该站点所属线路
-  isTransfer: boolean; // 是否为换乘站
-  position?: { x: number, y: number }; // 可视化坐标
+  lines: string[];
+  isTransfer: boolean;
+  position: { x: number, y: number };
 }
 
-export interface Connection {
+// 连接模型 (边)
+interface Connection {
   from: string;
   to: string;
   line: string;
-  distanceKm: number; // 提高要求：相邻站点距离
+  distanceKm: number; // 核心：支持非等距计算
 }
 
-export interface RouteStep {
-  station: string;
-  line: string;
-  action: 'start' | 'move' | 'transfer' | 'end';
-  duration?: number; // 该步骤耗时
-}
-
-export interface RouteResult {
-  path: string[];
-  steps: RouteStep[];
-  totalStops: number;
-  totalTransfers: number;
-  totalTimeSec: number;
-  totalDistanceKm: number;
+// 算法配置
+interface AlgorithmConfig {
+  strategy: 'min_stops' | 'min_transfers' | 'min_time';
+  viaStations?: string[]; // 支持途经点
+  velocityKmH: number;    // 地铁速度 v
+  dwellTimeTransferSec: number; // 换乘站停留 t1
+  dwellTimeNormalSec: number;   // 普通站停留 T2
+  transferTimeSec: number;      // 换乘耗时 T3
 }
 ```
 
-#### 第二步：迁移与增强算法 (Services)
-在 `src/services/Algorithms.ts` 中，我们需要改造 demo.html 中的算法：
+## 6. 目录结构说明
 
-1.  **图构建**: 读取 `connections.ts`，构建邻接表。
-2.  **权重计算**:
-    *   **最少站数**: 边权重 = 1。
-    *   **最少换乘**: 边权重 = 1，换乘惩罚 = 1000 (如 demo 所示)。
-    *   **最短时间 (提高要求)**:
-        *   边权重 = `distance / speed`。
-        *   节点进入成本 (In-node cost):
-            *   如果是中转站且发生换乘: `+ T3` (换乘时间)。
-            *   如果是普通站点或中转站但不换乘: `+ T2` (停站时间)。
-            *   (注：起点和终点通常不计算停站时间，需特殊处理)。
-3.  **途经站支持**:
-    *   如果用户选择了途经站 `M`，则计算 `Start -> M` 的最优路径 + `M -> End` 的最优路径，然后合并。
-
-#### 第三步：可视化组件 (MetroMap)
-使用 `echarts-for-react`：
-*   将站点映射为 ECharts Graph 的 `nodes`。
-*   将连接映射为 `links`。
-*   使用 `lines` 数据给边上色。
-*   **交互**: 点击 ECharts 节点时，回调通知父组件更新“起点”或“终点”输入框。
-
-#### 第四步：UI 交互 (MUI)
-*   **Sidebar**: 使用 `Drawer` 作为容器。
-*   **输入**: 使用 `Autocomplete` 组件让用户可以搜索站点（支持拼音过滤体验更好）。
-*   **途经站**: 添加一个“+ 添加途经点”按钮，动态插入一个 `Autocomplete` 输入框。
-*   **结果展示**: 使用 `Stepper` (垂直步骤条) 展示路线，清晰标记换乘站点。
-
-### 5. 总结与建议
-
-目前的 demo.html 逻辑是混在一起的，重构的关键是**关注点分离**。
-
-1.  **先做数据和算法**: 不要急着画图。先建立 `src/data` 和 `src/services`，写单元测试或者简单的 `console.log` 验证：输入南京站到南京南站，能否算出正确的路径和时间。
-2.  **再做 UI 骨架**: 用 MUI 搭建出左侧控制面板、右侧空白区域的布局。
-3.  **最后做可视化**: 将数据喂给 ECharts 或 Canvas 进行渲染。
-
-如果你准备好了，我们可以从**第一步：创建数据结构和类型定义**开始。你需要我先为你生成这些基础文件吗？
+```text
+src/
+├── components/
+│   ├── Layout/          # 布局框架 (MainLayout, ResizableSidebar, ThemeSelector)
+│   ├── Map/             # 地图组件 (MetroMap)
+│   ├── RouteResult/     # 结果展示 (RouteTimeline)
+│   └── Sidebar/         # 搜索面板 (SearchPanel)
+├── contexts/            # 全局状态 (ThemeContext)
+├── data/                # 数据源 (stations, lines, connections, generator)
+├── services/            # 核心逻辑
+│   ├── Algorithms.ts    # 路由算法 (BFS, Dijkstra)
+│   └── Graph.ts         # 图数据管理
+├── types/               # TypeScript 类型定义
+├── utils/               # 工具函数
+├── App.tsx              # 主控制器
+└── theme.ts             # MUI 主题配置
+```
